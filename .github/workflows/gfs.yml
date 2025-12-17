@@ -30,7 +30,7 @@ jobs:
       - name: Run GFS plot
         run: |
           mkdir -p images
-          python scripts/gfs_plot_japan_1.py
+          python scripts/gfs_plot_japan.py
 
       - name: Commit results
         run: |
