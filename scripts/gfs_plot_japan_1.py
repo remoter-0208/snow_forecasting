@@ -38,33 +38,33 @@ def download_gfs(fhr):
 # =====================
 # 描画関数
 # =====================
-def plot_gfs(fhr):
-    """指定予報時間の500hPa高度と降水量を描画しPNG保存"""
-    fname = download_gfs(fhr)
-    ds = xr.open_dataset(
-        fname,
-        engine="cfgrib",
-        backend_kwargs={"filter_by_keys": {"typeOfLevel": "isobaricInhPa", "level": 500}, "indexpath": ""}
+def download_gfs(fhr):
+    now = datetime.datetime.utcnow()
+    cycle = (now.hour // 6) * 6
+    date = now.strftime("%Y%m%d")
+    cycle_str = f"{cycle:02d}"
+    
+    url = (
+        f"https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/"
+        f"gfs.{date}/{cycle_str}/atmos/gfs.t{cycle_str}z.pgrb2.0p25.f{fhr:03d}"
     )
+    fname = f"images/gfs_{fhr:03d}.grib2"
     
-    # 経度補正
-    ds = ds.assign_coords(longitude=((ds.longitude + 180) % 360) - 180).sortby("longitude")
-    ds_jp = ds.sel(latitude=slice(LAT_MAX, LAT_MIN), longitude=slice(LON_MIN, LON_MAX))
-    z = ds_jp["gh"]
-    
-    # 描画
-    fig, ax = plt.subplots(figsize=(6,8), subplot_kw={'projection': ccrs.PlateCarree()})
-    ax.set_extent([LON_MIN, LON_MAX, LAT_MIN, LAT_MAX])
-    z.plot(ax=ax, transform=ccrs.PlateCarree(), cmap="viridis", cbar_kwargs={"label": "m"})
-    ax.coastlines(resolution="10m")
-    ax.add_feature(cfeature.BORDERS, linewidth=0.5)
-    ax.set_title(f"GFS 500hPa Z Forecast +{fhr}h")
-    
-    png_fname = f"images/gfs_{fhr:03d}.png"
-    plt.savefig(png_fname, dpi=150, bbox_inches="tight")
-    plt.close()
-    print("Saved:", png_fname)
+    # 既存ファイルがあればスキップ
+    if os.path.exists(fname):
+        print(f"{fname} already exists, skipping download.")
+        return fname
 
+    print("Downloading:", url)
+    r = requests.get(url)
+    if r.status_code != 200:
+        raise RuntimeError(f"Failed to download: {url} (status {r.status_code})")
+    if len(r.content) < 1000:
+        raise RuntimeError(f"Downloaded file too small: {fname}")
+
+    with open(fname, "wb") as f:
+        f.write(r.content)
+    return fname
 # =====================
 # 0h～240hまで3hごとに描画
 # =====================
