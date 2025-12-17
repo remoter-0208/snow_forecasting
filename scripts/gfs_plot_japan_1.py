@@ -23,7 +23,7 @@ def download_gfs(fhr):
     cycle_str = f"{cycle:02d}"
     
     url = (
-        f"https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/"
+        f"https://noaa-gfs-pds.s3.amazonaws.com/"
         f"gfs.{date}/{cycle_str}/atmos/gfs.t{cycle_str}z.pgrb2.0p25.f{fhr:03d}"
     )
     fname = f"images/gfs_{fhr:03d}.grib2"
